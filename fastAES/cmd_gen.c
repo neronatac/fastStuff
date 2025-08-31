@@ -78,7 +78,7 @@ int cmd_gen(int argc, const char **argv) {
         fwrite(key, 16, 1, keys_f);
         fwrite(cipher, 16, 1, ciphers_f);
 
-        if (idx % 10240 == 0) {
+        if (idx % 131072 == 0) {  // 128k
             fflush(plains_f);
             fflush(keys_f);
             fflush(ciphers_f);

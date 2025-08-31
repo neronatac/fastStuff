@@ -29,7 +29,8 @@ int cmd_bench(int argc, const char **argv) {
     }
 
     printf("Benchmark on %s files...\n", name);
-    clock_t begin_time = clock();
+    time_t begin_wall_time = time(NULL);
+    clock_t begin_cpu_time = clock();
 
     // open plain and key files
     char* plains_fn = malloc(strlen(name) + sizeof(PLAINS_BIN) + 1);
@@ -85,11 +86,14 @@ int cmd_bench(int argc, const char **argv) {
     fclose(ciphers_bench_f);
 
     // get elapsed time
-    clock_t end_time = clock();
-    double elapsed = (double)(end_time - begin_time) / CLOCKS_PER_SEC;
-    printf("Elapsed time: %f seconds\n", elapsed);
+    clock_t end_cpu_time = clock();
+    time_t end_wall_time = time(NULL);
+    double elapsed_cpu = (double)(end_cpu_time - begin_cpu_time) / CLOCKS_PER_SEC;
+    double elapsed = difftime(end_wall_time, begin_wall_time);
+    printf("Elapsed CPU time: %f seconds\n", elapsed_cpu);
+    printf("Elapsed wall time: %f seconds\n", elapsed);
     printf("%d AES/s\n", (int)(nbRecords / elapsed));
-    printf("1 AES in %d s\n", elapsed / (double)nbRecords);
+    printf("1 AES in %f ns\n", elapsed / (nbRecords / 1e9));
 
     // check results
     printf("Checking results...\n");
