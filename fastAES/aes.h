@@ -21,5 +21,11 @@ void aes128_cipher(uint8_t* plain, uint8_t* key, uint8_t* cipher) __attribute__(
  */
 int is_aesni_supported();
 
+/**
+ * Reads keys and plains files and produces a ciphers one.
+ * Returns the number of treated records or a negative  number in case of error.
+ */
+int aes_treat_files(const char *name);
+
 
 #endif  // AES_H

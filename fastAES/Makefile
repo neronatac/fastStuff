@@ -4,7 +4,7 @@ AS = nasm
 OBJCOPY = objcopy
 OBJDUMP = objdump
 
-CFLAGS += -Wall -Wextra -g -O3 #-DDEBUG
+CFLAGS += -Wall -Wextra -g -O3 -z noexecstack
 LIB_ARGPARSE = /usr/local/lib/libargparse.a
 ASFLAGS = -f elf64 -g
 

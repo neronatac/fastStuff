@@ -54,9 +54,9 @@ int cmd_gen(int argc, const char **argv) {
         return -1;
     }
 
-    char* ciphers_fn = malloc(strlen(name) + sizeof(CIPHERS_BIN) + 1);
+    char* ciphers_fn = malloc(strlen(name) + sizeof(CIPHERS_REF_BIN) + 1);
     strcpy(ciphers_fn, name);
-    strcat(ciphers_fn, CIPHERS_BIN);
+    strcat(ciphers_fn, CIPHERS_REF_BIN);
     FILE *ciphers_f = fopen(ciphers_fn, "wb");
     free(ciphers_fn);
     if (ciphers_f == NULL) {
@@ -68,9 +68,17 @@ int cmd_gen(int argc, const char **argv) {
     uint8_t plain[16];
     uint8_t key[16];
     uint8_t cipher[16];
-    for (unsigned int idx=0; idx < nbRecords; idx++){
-        getrandom(plain, 16, 0);
-        getrandom(key, 16, 0);
+    for (int idx=0; idx < nbRecords; idx++){
+        int status = getrandom(plain, 16, 0);
+        if (status != 16) {
+            printf("Error while getting random data for plains\n");
+            return -1;
+        }
+        status = getrandom(key, 16, 0);
+        if (status != 16) {
+            printf("Error while getting random data for keys\n");
+            return -1;
+        }
 
         aes128_cipher(plain, key, cipher);
 

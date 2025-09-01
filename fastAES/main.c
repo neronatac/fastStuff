@@ -7,7 +7,7 @@
 #include "utils.h"
 
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#define ARRAY_SIZE(x) (int)(sizeof(x) / sizeof(x[0]))
 
 
 struct cmd_struct {
@@ -41,7 +41,7 @@ int main(int argc, const char **argv) {
     if (argc < 1) {
         argparse_usage(&argparse);
         printf("List of commands:\n");
-        for (int i=0; i<ARRAY_SIZE(commands); i++) {
+        for (int i=0; i < ARRAY_SIZE(commands); i++) {
             printf("\t%s: %s\n", commands[i].cmd, commands[i].desc);
         }
         return -1;

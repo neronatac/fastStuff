@@ -32,58 +32,13 @@ int cmd_bench(int argc, const char **argv) {
     time_t begin_wall_time = time(NULL);
     clock_t begin_cpu_time = clock();
 
-    // open plain and key files
-    char* plains_fn = malloc(strlen(name) + sizeof(PLAINS_BIN) + 1);
-    strcpy(plains_fn, name);
-    strcat(plains_fn, PLAINS_BIN);
-    FILE *plains_f = fopen(plains_fn, "rb");
-    free(plains_fn);
-    if (plains_f == NULL) {
-        printf("Error while opening plains file\n");
-        return -1;
+    // do the thing
+    int nbRecords = aes_treat_files(name);
+    
+    if (nbRecords < 0) {
+        printf("Something went wrong during 'aes_treat_files' function");
+        return nbRecords;
     }
-
-    char* keys_fn = malloc(strlen(name) + sizeof(KEYS_BIN) + 1);
-    strcpy(keys_fn, name);
-    strcat(keys_fn, KEYS_BIN);
-    FILE *keys_f = fopen(keys_fn, "rb");
-    free(keys_fn);
-    if (keys_f == NULL) {
-        printf("Error while opening keys file\n");
-        return -1;
-    }
-
-    // create result file (ciphers_bench.bin)
-    char* ciphers_bench_fn = malloc(strlen(name) + sizeof(CIPHERS_BENCH_BIN) + 1);
-    strcpy(ciphers_bench_fn, name);
-    strcat(ciphers_bench_fn, CIPHERS_BENCH_BIN);
-    FILE *ciphers_bench_f = fopen(ciphers_bench_fn, "wb");
-    free(ciphers_bench_fn);
-    if (ciphers_bench_f == NULL) {
-        printf("Error while opening ciphers_bench file\n");
-        return -1;
-    }
-
-    // get number of records
-    fseek(plains_f, 0, SEEK_END);
-    unsigned int nbRecords = ftell(plains_f) / 16;
-    fseek(plains_f, 0, SEEK_SET);
-
-    // compute AES and save results
-    uint8_t plain[16];
-    uint8_t key[16];
-    uint8_t cipher[16];
-    for (unsigned int idx=0; idx < nbRecords; idx++) {
-        fread(plain, 16, 1, plains_f);
-        fread(key, 16, 1, keys_f);
-
-        aes128_cipher(plain, key, cipher);
-
-        fwrite(cipher, 16, 1, ciphers_bench_f);
-    }
-    fclose(plains_f);
-    fclose(keys_f);
-    fclose(ciphers_bench_f);
 
     // get elapsed time
     clock_t end_cpu_time = clock();
@@ -98,32 +53,41 @@ int cmd_bench(int argc, const char **argv) {
     // check results
     printf("Checking results...\n");
 
-    ciphers_bench_fn = malloc(strlen(name) + sizeof(CIPHERS_BENCH_BIN) + 1);
+    char *ciphers_bench_fn = malloc(strlen(name) + sizeof(CIPHERS_BIN) + 1);
     strcpy(ciphers_bench_fn, name);
-    strcat(ciphers_bench_fn, CIPHERS_BENCH_BIN);
-    ciphers_bench_f = fopen(ciphers_bench_fn, "rb");
+    strcat(ciphers_bench_fn, CIPHERS_BIN);
+    FILE *ciphers_bench_f = fopen(ciphers_bench_fn, "rb");
     free(ciphers_bench_fn);
     if (ciphers_bench_f == NULL) {
-        printf("Error while opening ciphers_bench file\n");
-        return -1;
-    }
-
-    char* ciphers_fn = malloc(strlen(name) + sizeof(CIPHERS_BIN) + 1);
-    strcpy(ciphers_fn, name);
-    strcat(ciphers_fn, CIPHERS_BIN);
-    FILE *ciphers_f = fopen(ciphers_fn, "rb");
-    free(ciphers_fn);
-    if (ciphers_f == NULL) {
         printf("Error while opening ciphers file\n");
         return -1;
     }
 
-    unsigned int idx;
+    char* ciphers_fn = malloc(strlen(name) + sizeof(CIPHERS_REF_BIN) + 1);
+    strcpy(ciphers_fn, name);
+    strcat(ciphers_fn, CIPHERS_REF_BIN);
+    FILE *ciphers_f = fopen(ciphers_fn, "rb");
+    free(ciphers_fn);
+    if (ciphers_f == NULL) {
+        printf("Error while opening ciphers_ref file\n");
+        return -1;
+    }
+
+    int idx;
     int is_good = 1;
     uint8_t cipher_bench[16];
+    uint8_t cipher[16];
     for (idx=0; idx < nbRecords; idx++) {
-        fread(cipher, 16, 1, ciphers_f);
-        fread(cipher_bench, 16, 1, ciphers_bench_f);
+        int status = fread(cipher, 16, 1, ciphers_f);
+        if (status != 1) {
+            printf("Error while reading ciphers_ref file\n");
+            return -1;
+        }
+        status = fread(cipher_bench, 16, 1, ciphers_bench_f);
+        if (status != 1) {
+            printf("Error while reading ciphers file\n");
+            return -1;
+        }
         if (memcmp(cipher, cipher_bench, 16) != 0) {
             is_good = 0;
             break;

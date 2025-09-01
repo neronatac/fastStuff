@@ -4,16 +4,10 @@
 
 // Macro definitions
 
-#ifdef DEBUG
-    #define DEBUG_PRINT(...) fprintf( stderr, __VA_ARGS__ )
-#else
-    #define DEBUG_PRINT(...) do{ } while ( 0 )
-#endif
-
 #define PLAINS_BIN "_plains.bin"
 #define KEYS_BIN "_keys.bin"
+#define CIPHERS_REF_BIN "_ciphers_ref.bin"
 #define CIPHERS_BIN "_ciphers.bin"
-#define CIPHERS_BENCH_BIN "_ciphers_bench.bin"
 
 // Functions in utils.c
 
