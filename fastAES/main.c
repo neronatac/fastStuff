@@ -24,7 +24,7 @@ static struct cmd_struct commands[] = {
 
 int main(int argc, const char **argv) {
     printf("fastAES program\n");
-
+    
     int support = is_aesni_supported();
     if(!support) {
         printf("AES-NI not supported!\n");

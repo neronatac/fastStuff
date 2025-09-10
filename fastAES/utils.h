@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stdint.h>
 
 // Macro definitions
 
@@ -12,9 +13,11 @@
 // Functions in utils.c
 
 /**
- * Prints the help message
+ * Parses a string representing an integer with a suffix (k, M, G)
+ * and returns the integer value.
+ * Returns 0 on success, -1 on error.
  */
-void help();
+int parse_long_with_suffix(const char* data, uint64_t *value);
 
 // MISC
 extern const char *const usages[];

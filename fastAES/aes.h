@@ -25,7 +25,7 @@ int is_aesni_supported();
  * Reads keys and plains files and produces a ciphers one.
  * Returns the number of treated records or a negative  number in case of error.
  */
-int aes_treat_files(const char *name);
+int aes_treat_files(const char *name, uint64_t chunk_size);
 
 
 #endif  // AES_H

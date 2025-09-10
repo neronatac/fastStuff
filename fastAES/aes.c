@@ -25,7 +25,7 @@ int is_aesni_supported() {
     return 1;
 }
 
-int aes_treat_files(const char *name) {
+int aes_treat_files(const char *name, uint64_t chunk_size) {
     // open plain and key files
     char* plains_fn = malloc(strlen(name) + sizeof(PLAINS_BIN) + 1);
     strcpy(plains_fn, name);
@@ -60,29 +60,44 @@ int aes_treat_files(const char *name) {
 
     // get number of records
     fseek(plains_f, 0, SEEK_END);
-    int nbRecords = ftell(plains_f) / 16;
+    const int nbRecords = ftell(plains_f) / 16;
     fseek(plains_f, 0, SEEK_SET);
 
+    // compute number of records in a chunk
+    const uint64_t expectedRecordsInChunk = chunk_size / 16;
+
+    // allocate RAM for chunk
+    uint8_t *plain_chunk = malloc(chunk_size);
+    uint8_t *key_chunk = malloc(chunk_size);
+    uint8_t *cipher_chunk = malloc(chunk_size);
+    if (plain_chunk == NULL || key_chunk == NULL || cipher_chunk == NULL) {
+        printf("Error while allocating RAM for chunks\n");
+        return -1;
+    }
+
     // compute AES and save results
-    uint8_t plain[16];
-    uint8_t key[16];
-    uint8_t cipher[16];
-    for (int idx=0; idx < nbRecords; idx++) {
-        int status = fread(plain, 16, 1, plains_f);
-        if (status != 1) {
+    int cur_record = 0;
+    while (cur_record < nbRecords) {
+        size_t nbRecordsInChunk = fread(plain_chunk, 16, chunk_size >> 4, plains_f);
+        if (nbRecordsInChunk != expectedRecordsInChunk && feof(plains_f) == 0) {
             printf("Error while reading plains file\n");
             return -1;
         }
-        status = fread(key, 16, 1, keys_f);
-        if (status != 1) {
+        size_t nbRecordsInChunk2 = fread(key_chunk, 16, chunk_size >> 4, keys_f);
+        if ((nbRecordsInChunk2 != expectedRecordsInChunk && feof(keys_f) == 0) || nbRecordsInChunk2 != nbRecordsInChunk) {
             printf("Error while reading keys file\n");
             return -1;
         }
 
-        aes128_cipher(plain, key, cipher);
+        for (size_t idx = 0; idx < nbRecordsInChunk; idx++) {
+            aes128_cipher(plain_chunk + idx*16, key_chunk + idx*16, cipher_chunk + idx*16);
+        }
 
-        fwrite(cipher, 16, 1, ciphers_bench_f);
+        fwrite(cipher_chunk, 16, nbRecordsInChunk, ciphers_bench_f);
+
+        cur_record += nbRecordsInChunk;
     }
+
     fclose(plains_f);
     fclose(keys_f);
     fclose(ciphers_bench_f);

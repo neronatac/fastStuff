@@ -10,11 +10,13 @@
 
 int cmd_bench(int argc, const char **argv) {
     const char *name = NULL;
+    const char *chunk_size_str = NULL;
 
     // parameters definition
     struct argparse_option options[] = {
         OPT_HELP(),
         OPT_STRING('n', "name", &name, "name of files to treat", NULL, 0, 0),
+        OPT_STRING('c', "chunk-size", &chunk_size_str, "chunk size in bytes, RAM usage is 3x greater. Must be multiple of 16. Can use 'k', 'M' or 'G' if necessary. DEFAULT: 1M", NULL, 0, 0),
         OPT_END(),
     };
 
@@ -27,13 +29,27 @@ int cmd_bench(int argc, const char **argv) {
         printf("Name must be defined\n");
         return -1;
     }
+    uint64_t chunk_size = 1024*1024; // 1 MB
+    if (chunk_size_str != NULL) {
+        if (parse_long_with_suffix(chunk_size_str, &chunk_size) != 0) {
+            argparse_usage(&argparse);
+            printf("Error while parsing chunk size\n");
+            return -1;
+        }
+    }
+    printf("Chunk size: %ld\n", chunk_size);
+    if (chunk_size % 16 != 0) {
+        argparse_usage(&argparse);
+        printf("Chunk size must be a multiple of 16\n");
+        return -1;
+    }
 
     printf("Benchmark on %s files...\n", name);
     time_t begin_wall_time = time(NULL);
     clock_t begin_cpu_time = clock();
 
     // do the thing
-    int nbRecords = aes_treat_files(name);
+    int nbRecords = aes_treat_files(name, chunk_size);
     
     if (nbRecords < 0) {
         printf("Something went wrong during 'aes_treat_files' function");
